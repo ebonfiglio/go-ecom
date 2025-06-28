@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Debug User Service",
+        "type": "go",
+        "request": "launch",
+        "program": "${workspaceFolder}/services/user/cmd/user",
+        "envFile": "${workspaceFolder}/services/user/cmd/user/.env",
+        "mode": "auto",
+        "args": []
+      }
+    ]
+  }
+  
