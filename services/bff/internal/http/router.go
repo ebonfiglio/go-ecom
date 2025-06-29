@@ -3,23 +3,22 @@ package http
 import (
 	"net/http"
 
-	"github.com/coreos/go-oidc"
+	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/ebonfiglio/go-ecom/pkg/auth"
 	"github.com/gin-gonic/gin"
 )
 
-// NewRouter sets up routes and middleware
 func NewRouter(verifier *oidc.IDTokenVerifier) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger(), gin.Recovery())
 
-	// Health endpoint
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "bff ok"})
 	})
 
 	api := r.Group("/v1")
-	// Apply Auth middleware globally to /v1
-	api.Use(AuthMiddleware(verifier))
+
+	api.Use(auth.Middleware(verifier))
 	{
 		// Placeholder proxy endpoints
 		api.GET("/users/:id", func(c *gin.Context) {

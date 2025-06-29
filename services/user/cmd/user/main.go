@@ -3,12 +3,10 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
 	"os"
-	"strings"
 
-	"github.com/coreos/go-oidc"
-	"github.com/gin-gonic/gin"
+	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/ebonfiglio/go-ecom/services/user/internal/http"
 	"github.com/joho/godotenv"
 )
 
@@ -33,44 +31,16 @@ func main() {
 	}
 	verifier := provider.Verifier(&oidc.Config{ClientID: audience})
 
-	r := gin.Default()
+	r := http.NewRouter(verifier)
 
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "ok"})
-	})
-
-	authMiddleware := func(c *gin.Context) {
-		hdr := c.GetHeader("Authorization")
-		parts := strings.SplitN(hdr, " ", 2)
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid auth header"})
-			return
-		}
-		if _, err := verifier.Verify(c.Request.Context(), parts[1]); err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
-			return
-		}
-		c.Next()
-	}
-
-	api := r.Group("/v1")
-	api.Use(authMiddleware)
-	{
-		api.POST("/echo", func(c *gin.Context) {
-			var payload struct {
-				Message string `json:"message" binding:"required"`
-			}
-			if err := c.ShouldBindJSON(&payload); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-				return
-			}
-			c.JSON(http.StatusOK, gin.H{"echo": payload.Message})
-		})
-
-	}
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 	r.Run(":" + port)
+
+	log.Printf("User Service running on :%s", port)
+	if err := r.Run(":" + port); err != nil {
+		log.Fatalf("server error: %v", err)
+	}
 }
